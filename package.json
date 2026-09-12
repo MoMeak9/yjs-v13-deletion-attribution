@@ -15,6 +15,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "test": "tsx --test test/*.test.ts",
+    "example": "tsx examples/complete-flow.ts",
     "check": "npm run build && npm test"
   },
   "keywords": ["yjs", "crdt", "collaboration", "deletion", "attribution"],

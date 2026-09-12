@@ -12,6 +12,62 @@ export interface DeletionRecord extends DeletionRange {
   readonly author: string
 }
 
+/** Storage boundary used between transaction capture and snapshot materialization. */
+export interface DeletionStore {
+  append(documentId: string, records: readonly DeletionRecord[]): Promise<void>
+  claim(documentId: string): Promise<DeletionRecord[]>
+  restore(documentId: string, records: readonly DeletionRecord[]): Promise<void>
+}
+
+/** A dependency-free store for tests, examples, and single-process applications. */
+export class MemoryDeletionStore implements DeletionStore {
+  private readonly records = new Map<string, DeletionRecord[]>()
+
+  async append(documentId: string, records: readonly DeletionRecord[]): Promise<void> {
+    if (records.length === 0) return
+    const current = this.records.get(documentId) ?? []
+    current.push(...records)
+    this.records.set(documentId, current)
+  }
+
+  async claim(documentId: string): Promise<DeletionRecord[]> {
+    const claimed = this.records.get(documentId) ?? []
+    this.records.delete(documentId)
+    return claimed
+  }
+
+  async restore(documentId: string, records: readonly DeletionRecord[]): Promise<void> {
+    if (records.length === 0) return
+    const current = this.records.get(documentId) ?? []
+    this.records.set(documentId, [...records, ...current])
+  }
+}
+
+/**
+ * Keeps inbound frame declarations aligned with Yjs transactions.
+ * A SyncStep2 should be recorded as an empty claim, not omitted, because it
+ * still produces a transaction and must consume one queue entry.
+ */
+export class DeletionClaimTracker<T extends object = object> {
+  private readonly claims = new WeakMap<T, DeletionRange[][]>()
+
+  record(connection: T, claimed: readonly DeletionRange[] | null): void {
+    const queue = this.claims.get(connection) ?? []
+    queue.push(claimed === null ? [] : [...claimed])
+    this.claims.set(connection, queue)
+  }
+
+  consume(connection: T): DeletionRange[] | null {
+    const queue = this.claims.get(connection)
+    if (!queue || queue.length === 0) return null
+    return queue.shift() ?? null
+  }
+
+  forget(connection: T): void {
+    this.claims.delete(connection)
+  }
+}
+
 /** A zero-width mark in the current document coordinate space. */
 export interface DeletionMark {
   readonly at: number
