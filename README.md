@@ -1,5 +1,7 @@
 # yjs-v13-deletion-attribution
 
+[中文文档（README.zh-CN.md）](./README.zh-CN.md)
+
 Attribute Yjs deletions to users even though a Yjs tombstone does not store the deleting user's identity.
 
 ## The problem
