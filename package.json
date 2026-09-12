@@ -1,0 +1,30 @@
+{
+  "name": "yjs-v13-deletion-attribution",
+  "version": "0.1.0",
+  "description": "Attribute Yjs deletions to users without relying on Yjs tombstones to store an author.",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "tsx --test test/*.test.ts",
+    "check": "npm run build && npm test"
+  },
+  "keywords": ["yjs", "crdt", "collaboration", "deletion", "attribution"],
+  "license": "MIT",
+  "dependencies": {
+    "yjs": "^13.6.29"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0"
+  }
+}
