@@ -241,3 +241,5 @@ export function encodeDeletionAttribution(marks: readonly DeletionMark[]): strin
     ? null
     : JSON.stringify({ kind: 'ranges', ranges: [], deletions: marks })
 }
+
+export * from './redis-store.js'

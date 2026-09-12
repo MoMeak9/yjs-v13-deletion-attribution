@@ -256,7 +256,21 @@ Redis 实现应满足：
 - 设置 TTL，避免连接异常或永远不创建快照导致无限积累；
 - 对同一文档串行化 `append/claim/restore`，避免 claim 先于 append 执行。
 
-本项目没有内置 Redis 客户端，以避免锁定某个 Redis SDK 和部署方式。算法和记录格式与 Redis 实现无关。
+仓库现在提供了 `RedisDeletionStore`。它只依赖一个兼容 `eval(script, numberOfKeys, ...args)` 的 Redis 客户端，因此可以注入 ioredis 或 node-redis，而不把客户端 SDK 固定为运行时依赖。
+
+```ts
+import Redis from 'ioredis'
+import { RedisDeletionStore } from 'yjs-v13-deletion-attribution'
+
+const redis = new Redis(process.env.REDIS_URL)
+const deletionStore = new RedisDeletionStore(redis, {
+  keyPrefix: 'eva:deletions:',
+  ttlSeconds: 24 * 60 * 60,
+  maxRecords: 5000,
+})
+```
+
+`append`、`claim`、`restore` 分别使用 Redis Lua 脚本完成批量写入、原子读取并清空、失败恢复；同一进程内还会按文档串行化这些操作，避免 `claim` 先于前一个 `append` 执行。多实例部署时，Redis 脚本提供跨实例的原子性。
 
 ## 数据结构建议
 

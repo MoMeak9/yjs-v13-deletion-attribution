@@ -50,7 +50,7 @@ const marks = attributeDeletions(doc, 'default', records, {
 - Do not infer a deleting author from the tombstone or from the deleted item's creator.
 - Treat the external records as the source of deletion authors; the Y.Doc only supplies tombstone positions.
 
-The library deliberately does not include Redis, Hocuspocus, or a database adapter. The host application owns frame parsing, authenticated user lookup, record retention, and snapshot persistence.
+The library includes an optional `RedisDeletionStore` that accepts an injected Redis client's `eval` method. It deliberately does not include a Hocuspocus protocol adapter or a database adapter; the host application owns frame parsing, authenticated user lookup, and snapshot persistence.
 
 ## Development
 

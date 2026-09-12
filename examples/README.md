@@ -32,4 +32,4 @@ const records = await store.claim(documentName)
 const deletions = attributeDeletions(doc, 'default', records)
 ```
 
-`MemoryDeletionStore` is intentionally tiny and dependency-free. Replace it with a Redis-backed implementation that provides atomic append/claim/restore and a TTL in production. The attribution algorithm and record format stay unchanged.
+`MemoryDeletionStore` is intentionally tiny and dependency-free. For production, use the included `RedisDeletionStore`, which provides atomic append/claim/restore through Lua scripts and a TTL. The attribution algorithm and record format stay unchanged.
