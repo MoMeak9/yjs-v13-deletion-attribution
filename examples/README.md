@@ -18,7 +18,8 @@ In a Hocuspocus server, wire the same calls as follows:
 
 ```ts
 beforeHandleMessage({ connection, update }) {
-  tracker.record(connection, decodeSyncUpdateDeleteSet(update))
+  const frame = decodeSyncFrame(update)
+  tracker.record(connection, frame?.claimedDeletions ?? [])
 }
 
 afterTransaction({ transaction, documentName }) {

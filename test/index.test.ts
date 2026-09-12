@@ -5,7 +5,10 @@ import {
   attributeDeletions,
   captureDeletionRecords,
   collectTransactionDeletions,
+  decodeSyncFrame,
   encodeDeletionAttribution,
+  SYNC_STEP_2,
+  SYNC_UPDATE,
   type DeletionRange,
 } from '../src/index.js'
 
@@ -85,3 +88,39 @@ test('keeps adjacent deletions by different users at one anchor', () => {
   ])
   doc.destroy()
 })
+
+test('decodes sync envelopes and never attributes SyncStep2', () => {
+  const update = Y.encodeStateAsUpdate(new Y.Doc())
+  const realtime = envelope('doc', SYNC_UPDATE, update)
+  assert.equal(decodeSyncFrame(realtime)?.syncType, SYNC_UPDATE)
+  assert.deepEqual(decodeSyncFrame(realtime)?.claimedDeletions, [])
+
+  const replay = envelope('doc', SYNC_STEP_2, update)
+  assert.deepEqual(decodeSyncFrame(replay), {
+    syncType: SYNC_STEP_2,
+    claimedDeletions: [],
+  })
+  assert.equal(decodeSyncFrame(new Uint8Array([0xff, 0xff, 0xff, 0xff, 0xff])), null)
+})
+
+function envelope(name: string, syncType: number, payload: Uint8Array): Uint8Array {
+  const documentName = new TextEncoder().encode(name)
+  return new Uint8Array([
+    ...varUint(documentName.length),
+    ...documentName,
+    0,
+    syncType,
+    ...varUint(payload.length),
+    ...payload,
+  ])
+}
+
+function varUint(value: number): number[] {
+  const result: number[] = []
+  do {
+    const next = value >>> 7
+    result.push(next === 0 ? value : value | 0x80)
+    value = next
+  } while (value !== 0)
+  return result
+}

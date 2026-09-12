@@ -4,7 +4,9 @@ import {
   captureDeletionRecords,
   collectTransactionDeletions,
   DeletionClaimTracker,
+  decodeSyncFrame,
   MemoryDeletionStore,
+  SYNC_UPDATE,
 } from '../src/index.js'
 
 /**
@@ -39,13 +41,10 @@ const clientFragment = clientDoc.getXmlFragment('default')
 // In a real adapter this is decoded from the inbound SYNC_UPDATE frame.
 let claimedRanges: ReturnType<typeof collectTransactionDeletions> = []
 clientDoc.on('update', update => {
-  const decoded = Y.decodeUpdate(update)
-  claimedRanges = []
-  decoded.ds.clients.forEach((entries, client) => {
-    for (const entry of entries) {
-      claimedRanges.push({ client, from: entry.clock, to: entry.clock + entry.len })
-    }
-  })
+  // A production adapter wraps `update` in the sync envelope first. The small
+  // helper below builds that envelope for this standalone example.
+  const envelope = syncUpdateEnvelope('example-document', update)
+  claimedRanges = [...(decodeSyncFrame(envelope)?.claimedDeletions ?? [])]
 })
 
 let beforeState = new Map<number, number>()
@@ -83,3 +82,28 @@ console.log({ records, marks })
 seed.destroy()
 clientDoc.destroy()
 serverDoc.destroy()
+
+function syncUpdateEnvelope(documentName: string, update: Uint8Array): Uint8Array {
+  const name = new TextEncoder().encode(documentName)
+  return new Uint8Array([
+    ...varUintBytes(name.length),
+    ...name,
+    0,
+    SYNC_UPDATE,
+    ...varBytes(update),
+  ])
+}
+
+function varBytes(value: Uint8Array): number[] {
+  return [...varUintBytes(value.length), ...value]
+}
+
+function varUintBytes(value: number): number[] {
+  const bytes: number[] = []
+  do {
+    const next = value >>> 7
+    bytes.push(next === 0 ? value : value | 0x80)
+    value = next
+  } while (value !== 0)
+  return bytes
+}

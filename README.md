@@ -40,6 +40,8 @@ const marks = attributeDeletions(doc, 'default', records, {
 // [{ at: 2, author: 'bob' }]
 ```
 
+For Hocuspocus/y-protocols envelopes, `decodeSyncFrame()` extracts the `SYNC_UPDATE` DeleteSet and deliberately returns an empty claim for `SyncStep2`.
+
 `DeletionRecord` stores Yjs clock ranges rather than ProseMirror positions. Clock IDs are stable while document positions move. `DeletionMark.at` is zero-width because deleted content is absent from the current coordinate space.
 
 ## Safety rules

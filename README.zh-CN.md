@@ -183,7 +183,7 @@ beforeHandleMessage({ connection, update }) {
 }
 ```
 
-本项目不强绑定 Hocuspocus 协议版本，因此 `decodeSyncFrame` 由宿主应用实现。它需要从实时 update 中得到 `clientID/clock/length` 范围。
+仓库提供 `decodeSyncFrame()`，可直接解析标准 sync envelope 并提取 `SYNC_UPDATE` 的 `clientID/clock/length` 范围。宿主仍需根据实际 Hocuspocus 版本确认消息是否带有文档名 envelope；如果网关已经剥离 envelope，可以直接把 payload 用 `Y.decodeUpdate()` 解码后构造同样的 `claimedRanges`。
 
 ### 2. 在 `afterTransaction` 消费声明
 
@@ -300,6 +300,8 @@ const deletionStore = new RedisDeletionStore(redis, {
 
 ```text
 src/index.ts                  核心类型、捕获、存储边界、墓碑映射
+src/sync-frame.ts             Hocuspocus sync envelope 与 DeleteSet 解析
+src/redis-store.ts            Redis 原子 append/claim/restore 实现
 test/index.test.ts            真实 Yjs 事务测试
 examples/complete-flow.ts     无外部服务的完整生命周期示例
 examples/README.md            Hocuspocus 接入提示

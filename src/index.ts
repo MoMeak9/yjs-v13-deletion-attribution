@@ -243,3 +243,4 @@ export function encodeDeletionAttribution(marks: readonly DeletionMark[]): strin
 }
 
 export * from './redis-store.js'
+export * from './sync-frame.js'
